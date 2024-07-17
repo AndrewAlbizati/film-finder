@@ -1,0 +1,15 @@
+- Server
+    - [ ] Create user authentication system
+    - [ ] Create SQL schema 
+    - [ ] Create ORM mapping
+    - [ ] Create URLs for 
+        - [ ] Get top movies
+        - [ ] Add liked movie
+        - [ ] Add disliked movie
+        - [ ] Add never seen movie
+        - [ ] Get recommendations
+- App
+    - [ ] Create swiping system
+    - [ ] Create login screen
+    - [ ] Create guest mode
+    - [ ] Create recommendations screen
