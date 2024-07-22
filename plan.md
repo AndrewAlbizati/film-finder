@@ -1,7 +1,5 @@
 - Server
     - [ ] Create user authentication system
-    - [ ] Create SQL schema 
-    - [ ] Create ORM mapping
     - [ ] Create URLs for 
         - [ ] Get top movies
         - [ ] Add liked movie
