@@ -15,4 +15,4 @@ class Movie(models.Model):
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Movie: {self.movie_id}, Status: {self.status}"
+        return f"User: {self.user.username}, Movie: {self.movie_id}, Status: {self.status}"
