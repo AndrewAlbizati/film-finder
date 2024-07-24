@@ -14,6 +14,7 @@ from django.http import HttpResponseBadRequest, HttpResponseNotFound
 
 from .models import Movie
 import json
+import pickle
 
 
 @api_view(['GET'])
@@ -59,7 +60,7 @@ def get_routes(request):
     return Response(routes)
 
 @api_view(['GET'])
-def list(request):
+def list_movies(request):
     with open("movie/files/popular.json", "r") as f:
         popular_movie_list = json.load(f)
 
@@ -67,8 +68,7 @@ def list(request):
 
 @api_view(['GET'])
 def get_movie(request, pk):
-    with open("movie/files/movies.json", "r") as f:
-        movie_list = json.load(f)
+    movie_list = __get_movies()
     
     if not __movie_exists(pk):
         return HttpResponseBadRequest("Invalid movie ID provided")
@@ -147,9 +147,39 @@ def get_movie_status(request, pk):
 
     return Response({"user":user.username, "movie": movie.movie_id, "status": movie.status})
 
-def __movie_exists(movie_id):
+@api_view(['GET'])
+@authentication_classes([SessionAuthentication, TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def recommend(request):
+    user = User.objects.get(username=request.user.username)
+    movie_list = __get_movies()
+    movies = pickle.load(open("movie/files/movies_list.pkl", "rb"))
+    similarity = pickle.load(open("movie/files/similarity.pkl", "rb"))
+    return_count = 5
+    
+    recommender = {}
+
+    liked_movies = Movie.objects.filter(user=user, status='like')
+    for movie in liked_movies:
+        movie_id = movie.movie_id
+        
+        index = movies[movies['id'] == movie_id].index[0]
+
+        distance = sorted(list(enumerate(similarity[index])), reverse=True, key=lambda vector:vector[1])
+        
+        for i in distance[1:1+return_count]:
+            movies_id = movies.iloc[i[0]].id
+            recommender.setdefault(str(movies_id), 0)
+            recommender[str(movies_id)] += 1
+
+    return Response(recommender)
+
+def __get_movies():
     with open("movie/files/movies.json", "r") as f:
         movie_list = json.load(f)
-    
-    return movie_id in movie_list
+
+    return movie_list
+
+def __movie_exists(movie_id):
+    return movie_id in __get_movies()
     
