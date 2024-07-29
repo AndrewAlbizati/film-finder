@@ -152,7 +152,6 @@ def get_movie_status(request, pk):
 @permission_classes([IsAuthenticated])
 def recommend(request):
     user = User.objects.get(username=request.user.username)
-    movie_list = __get_movies()
     movies = pickle.load(open("movie/files/movies_list.pkl", "rb"))
     similarity = pickle.load(open("movie/files/similarity.pkl", "rb"))
     return_count = 5
@@ -164,6 +163,7 @@ def recommend(request):
         movie_id = movie.movie_id
         
         index = movies[movies['id'] == movie_id].index[0]
+        recommender[str(movie_id)] = -10000
 
         distance = sorted(list(enumerate(similarity[index])), reverse=True, key=lambda vector:vector[1])
         
@@ -171,6 +171,10 @@ def recommend(request):
             movies_id = movies.iloc[i[0]].id
             recommender.setdefault(str(movies_id), 0)
             recommender[str(movies_id)] += 1
+
+    keys_to_delete = [key for key in recommender if recommender[key] < 0]
+    for key in keys_to_delete:
+        del recommender[key]
 
     return Response(recommender)
 
