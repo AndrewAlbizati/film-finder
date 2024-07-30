@@ -1,4 +1,4 @@
-import 'package:app/util/swipe_card.dart';
+import 'package:app/widgets/swipe_card.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {
