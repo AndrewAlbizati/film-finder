@@ -175,8 +175,11 @@ def recommend(request):
     keys_to_delete = [key for key in recommender if recommender[key] < 0]
     for key in keys_to_delete:
         del recommender[key]
+    
+    sorted_keys = reversed(sorted(recommender, key=lambda k: recommender[k]))
 
-    return Response(recommender)
+    return Response(sorted_keys)
+    #return Response(recommender)
 
 def __get_movies():
     with open("movie/files/movies.json", "r") as f:

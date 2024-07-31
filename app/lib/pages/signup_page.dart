@@ -1,21 +1,20 @@
 import 'dart:convert';
 
 import 'package:app/pages/home_page.dart';
-import 'package:app/pages/signup_page.dart';
 import 'package:app/service/account.dart';
-import 'package:app/service/url.dart';
 import 'package:app/widgets/error_popup.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({Key? key}) : super(key: key);
+class SignupPage extends StatefulWidget {
+  const SignupPage({Key? key}) : super(key: key);
 
   @override
-  _LoginPageState createState() => _LoginPageState();
+  _SignupPageState createState() => _SignupPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _SignupPageState extends State<SignupPage> {
+  TextEditingController _emailController = TextEditingController();
   TextEditingController _usernameController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
 
@@ -32,8 +31,16 @@ class _LoginPageState extends State<LoginPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Login',
+                  'Sign Up',
                   style: TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 20),
+                TextField(
+                  controller: _emailController,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'Email',
+                  ),
                 ),
                 SizedBox(height: 20),
                 TextField(
@@ -55,22 +62,10 @@ class _LoginPageState extends State<LoginPage> {
                 SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () async {
-                    _login(_usernameController.text, _passwordController.text);
-                  },
-                  child: Text('Login'),
-                ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                        MaterialPageRoute(builder: (context) => SignupPage()));
+                    _signup(_emailController.text, _usernameController.text,
+                        _passwordController.text);
                   },
                   child: Text('Sign Up'),
-                ),
-                TextButton(
-                  onPressed: () {
-                    print('continue as guest');
-                  },
-                  child: Text('Continue as Guest'),
                 ),
               ],
             ),
@@ -80,18 +75,19 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  void _login(String username, String password) async {
-    Uri loginUri = getUrl("/api/account/login/");
+  void _signup(String email, String username, String password) async {
+    final Uri loginUrl = Uri.parse('http://localhost:8000/api/account/signup/');
 
     // Constructing the request body
     final Map<String, String> requestBody = {
+      'email': email,
       'username': username,
       'password': password,
     };
 
     // Making the POST request
     final http.Response response = await http.post(
-      loginUri,
+      loginUrl,
       headers: {'Content-Type': 'application/json'},
       body: json.encode(requestBody),
     );
@@ -102,8 +98,8 @@ class _LoginPageState extends State<LoginPage> {
       Navigator.of(context).pushReplacement(new MaterialPageRoute(
           builder: (BuildContext context) => HomePage(account: account)));
     } else {
-      showError(
-          context, 'Login Failed', 'Incorrect username/password combination.');
+      showError(context, 'Sign up Failed',
+          'Please try again with a different username');
     }
   }
 }

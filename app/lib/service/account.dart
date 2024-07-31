@@ -39,6 +39,14 @@ class Account {
     );
   }
 
+  factory Account.fromResponseBody(var jsonResponse) {
+    return Account(
+      email: jsonResponse['user']['email'],
+      username: jsonResponse['user']['username'],
+      token: jsonResponse['token'],
+    );
+  }
+
   String toJson() => json.encode(toMap());
 
   factory Account.fromJson(String source) =>
