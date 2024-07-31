@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:app/pages/home_page.dart';
 import 'package:app/service/account.dart';
+import 'package:app/service/url.dart';
 import 'package:app/widgets/error_popup.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -76,7 +77,7 @@ class _SignupPageState extends State<SignupPage> {
   }
 
   void _signup(String email, String username, String password) async {
-    final Uri loginUrl = Uri.parse('http://localhost:8000/api/account/signup/');
+    Uri signupUrl = getUrl("/api/account/signup/");
 
     // Constructing the request body
     final Map<String, String> requestBody = {
@@ -87,7 +88,7 @@ class _SignupPageState extends State<SignupPage> {
 
     // Making the POST request
     final http.Response response = await http.post(
-      loginUrl,
+      signupUrl,
       headers: {'Content-Type': 'application/json'},
       body: json.encode(requestBody),
     );
