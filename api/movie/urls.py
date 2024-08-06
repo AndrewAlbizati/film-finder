@@ -10,4 +10,6 @@ urlpatterns = [
     path('dislike/<str:pk>/', views.add_disliked_movie),
     path('unwatched/<str:pk>/', views.add_unwatched_movie),
     path('recommend/', views.recommend),
+    path('batchrecommend/', views.batch_recommend),
+    path('batchget/', views.batch_get_movie),
 ]

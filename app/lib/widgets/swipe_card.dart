@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_swipable/flutter_swipable.dart';
 
 class SwipeCard extends StatelessWidget {
-  final color;
+  final String text;
+  final Color color;
 
-  SwipeCard({required this.color});
+  SwipeCard({
+    required this.text,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +20,10 @@ class SwipeCard extends StatelessWidget {
         print("Swipe left");
       },
       child: Container(
+        height: 500,
+        width: 500,
         color: color,
+        child: Text(text),
       ),
     );
   }

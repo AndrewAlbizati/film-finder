@@ -70,10 +70,11 @@ def list_movies(request):
 def get_movie(request, pk):
     movie_list = __get_movies()
     
-    if not __movie_exists(pk):
+    if not __movie_exists(pk, movie_list):
         return HttpResponseBadRequest("Invalid movie ID provided")
 
     movie = movie_list[pk]
+    movie["id"] = int(pk)
 
     return Response(movie)
 
@@ -81,7 +82,7 @@ def get_movie(request, pk):
 @authentication_classes([SessionAuthentication, TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def add_liked_movie(request, pk):
-    if not __movie_exists(pk):
+    if not __movie_exists(pk, __get_movies()):
         return HttpResponseBadRequest("Invalid movie ID provided")
     
     movie_id = int(pk)
@@ -98,7 +99,7 @@ def add_liked_movie(request, pk):
 @authentication_classes([SessionAuthentication, TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def add_disliked_movie(request, pk):
-    if not __movie_exists(pk):
+    if not __movie_exists(pk, __get_movies()):
         return HttpResponseBadRequest("Invalid movie ID provided")
 
     movie_id = int(pk)
@@ -115,7 +116,7 @@ def add_disliked_movie(request, pk):
 @authentication_classes([SessionAuthentication, TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def add_unwatched_movie(request, pk):
-    if not __movie_exists(pk):
+    if not __movie_exists(pk, __get_movies()):
         return HttpResponseBadRequest("Invalid movie ID provided")
 
     movie_id = int(pk)
@@ -132,7 +133,7 @@ def add_unwatched_movie(request, pk):
 @authentication_classes([SessionAuthentication, TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def get_movie_status(request, pk):
-    if not __movie_exists(pk):
+    if not __movie_exists(pk, __get_movies()):
         return HttpResponseBadRequest("Invalid movie ID provided")
 
     movie_id = int(pk)
@@ -181,12 +182,75 @@ def recommend(request):
     return Response(sorted_keys)
     #return Response(recommender)
 
+@api_view(['POST'])
+def batch_recommend(request):
+    liked_movies = request.data["liked"]
+    disliked_movies = request.data["disliked"]
+
+    movies = pickle.load(open("movie/files/movies_list.pkl", "rb"))
+    similarity = pickle.load(open("movie/files/similarity.pkl", "rb"))
+    return_count = 5
+    
+    recommender = {}
+
+    # Handle liked movies
+    for movie_id in liked_movies:    
+        index = movies[movies['id'] == movie_id].index[0]
+        recommender[str(movie_id)] = -10000  # make it so already liked movies won't appear
+
+        distance = sorted(list(enumerate(similarity[index])), reverse=True, key=lambda vector:vector[1])
+        
+        for i in distance[1:1+return_count]:
+            movies_id = movies.iloc[i[0]].id
+            recommender.setdefault(str(movies_id), 0)
+            recommender[str(movies_id)] += 1
+    
+    # Handle disliked movies
+    for movie_id in disliked_movies:    
+        index = movies[movies['id'] == movie_id].index[0]
+        recommender[str(movie_id)] = -10000  # make it so already disliked movies won't appear
+
+        distance = sorted(list(enumerate(similarity[index])), reverse=True, key=lambda vector:vector[1])
+        
+        for i in distance[1:1+return_count]:
+            movies_id = movies.iloc[i[0]].id
+            recommender.setdefault(str(movies_id), 0)
+            recommender[str(movies_id)] -= 1
+
+    # Remove keys with negative values
+    keys_to_delete = [key for key in recommender if recommender[key] < 0]
+    for key in keys_to_delete:
+        del recommender[key]
+    
+    sorted_keys = reversed(sorted(recommender, key=lambda k: recommender[k]))
+
+    return Response(sorted_keys)
+
+@api_view(['POST'])
+def batch_get_movie(request):
+    movies = request.data
+
+    response = []
+
+    movie_list = __get_movies()
+
+    for movie_id in movies:
+        if not __movie_exists(str(movie_id), movie_list):
+            return HttpResponseBadRequest("Invalid movie ID provided")
+
+        movie = movie_list[str(movie_id)]
+        movie["id"] = movie_id
+        
+        response.append(movie)
+        
+    return Response(response)
+
 def __get_movies():
     with open("movie/files/movies.json", "r") as f:
         movie_list = json.load(f)
 
     return movie_list
 
-def __movie_exists(movie_id):
-    return movie_id in __get_movies()
+def __movie_exists(movie_id, movie_list):
+    return movie_id in movie_list
     
