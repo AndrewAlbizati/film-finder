@@ -12,6 +12,11 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  final int movieBufferSize = 50;
+  final int minimumRefreshCount = 10;
+
+  int _movieIndexStart = 0;
+
   int _colorIndex = 0;
   List<Color> colors = [
     Colors.red,
@@ -28,6 +33,9 @@ class _HomePageState extends State<HomePage> {
 
   List<Widget> _stackItems = [];
 
+  List<Movie> _likedMovies = [];
+  List<Movie> _dislikedMovies = [];
+
   @override
   void initState() {
     super.initState();
@@ -37,19 +45,50 @@ class _HomePageState extends State<HomePage> {
   Future<void> _loadMovies() async {
     List<int> movieIds = await Movie.getMovieIds();
 
-    movieIds = movieIds.sublist(0, 10);
+    int startIndex = _movieIndexStart;
+    _movieIndexStart += movieBufferSize;
+    int endIndex = _movieIndexStart;
+
+    movieIds = movieIds.sublist(startIndex, endIndex);
     List<Movie> movies = await Movie.getBatchMovies(movieIds);
 
     movies.forEach((element) {
-      _addMovie(element.title);
+      _addMovie(element);
     });
   }
 
-  void _addMovie(String title) {
+  void _addMovie(Movie movie) {
     setState(() {
       _stackItems.insert(
-          0, SwipeCard(text: title, color: colors[_colorIndex++]));
+        0,
+        SwipeCard(
+          movie: movie,
+          color: colors[_colorIndex++ % 10],
+          swipeLeft: _dislikeMovie,
+          swipeRight: _likeMovie,
+        ),
+      );
     });
+  }
+
+  void _addMoreMovies() {
+    setState(() {
+      _stackItems.removeLast();
+
+      if (_stackItems.length < minimumRefreshCount) {
+        _loadMovies();
+      }
+    });
+  }
+
+  void _likeMovie(Movie movie) {
+    _likedMovies.add(movie);
+    _addMoreMovies();
+  }
+
+  void _dislikeMovie(Movie movie) {
+    _dislikedMovies.add(movie);
+    _addMoreMovies();
   }
 
   @override
@@ -67,6 +106,40 @@ class _HomePageState extends State<HomePage> {
                 children: _stackItems,
               ),
             ),
+            SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(onPressed: () {}, child: Text("Like")),
+                SizedBox(width: 20),
+                ElevatedButton(onPressed: () {}, child: Text("Dislike"))
+              ],
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                List<int> likedMovieIds = [];
+                List<int> dislikedMovieIds = [];
+                if (_likedMovies.length < 15) {
+                  print('need more movies');
+                } else {
+                  _likedMovies.forEach((element) {
+                    likedMovieIds.add(element.id);
+                  });
+                }
+
+                _dislikedMovies.forEach((element) {
+                  dislikedMovieIds.add(element.id);
+                });
+
+                Map<String, List<int>> map = {
+                  "liked": likedMovieIds,
+                  "disliked": dislikedMovieIds
+                };
+                print(map);
+              },
+              child: Text('Recommend'),
+            )
           ],
         ),
       ),
