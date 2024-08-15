@@ -4,13 +4,11 @@ import 'package:flutter_swipable/flutter_swipable.dart';
 
 class SwipeCard extends StatelessWidget {
   final Movie movie;
-  final Color color;
   final Function swipeLeft;
   final Function swipeRight;
 
   SwipeCard({
     required this.movie,
-    required this.color,
     required this.swipeLeft,
     required this.swipeRight,
   });
@@ -26,12 +24,7 @@ class SwipeCard extends StatelessWidget {
         print("Swipe left");
         swipeLeft(movie);
       },
-      child: Container(
-        height: 500,
-        width: 500,
-        color: color,
-        child: Text(movie.title),
-      ),
+      child: Image.network(movie.poster),
     );
   }
 }

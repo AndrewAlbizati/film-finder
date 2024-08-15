@@ -11,6 +11,7 @@ class Movie {
   double popularity;
   String releaseDate;
   int voteCount;
+  String poster;
   int id;
 
   Movie({
@@ -21,6 +22,7 @@ class Movie {
     required this.popularity,
     required this.releaseDate,
     required this.voteCount,
+    required this.poster,
     required this.id,
   });
 
@@ -33,6 +35,7 @@ class Movie {
         popularity: jsonResponse['popularity'],
         releaseDate: jsonResponse['release_date'],
         voteCount: jsonResponse['vote_count'],
+        poster: jsonResponse['poster'],
         id: jsonResponse['id']);
   }
 

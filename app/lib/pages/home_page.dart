@@ -1,5 +1,6 @@
 import 'package:app/service/account.dart';
 import 'package:app/service/movie.dart';
+import 'package:app/widgets/error_popup.dart';
 import 'package:app/widgets/swipe_card.dart';
 import 'package:flutter/material.dart';
 
@@ -12,24 +13,12 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  late final Future myFuture;
+
   final int movieBufferSize = 50;
   final int minimumRefreshCount = 10;
 
   int _movieIndexStart = 0;
-
-  int _colorIndex = 0;
-  List<Color> colors = [
-    Colors.red,
-    Colors.blue,
-    Colors.green,
-    Colors.deepOrange,
-    Colors.yellow,
-    Colors.teal,
-    Colors.purpleAccent,
-    Colors.purple,
-    Colors.redAccent,
-    Colors.pinkAccent
-  ];
 
   List<Widget> _stackItems = [];
 
@@ -39,7 +28,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _loadMovies();
+    myFuture = _loadMovies();
   }
 
   Future<void> _loadMovies() async {
@@ -63,7 +52,6 @@ class _HomePageState extends State<HomePage> {
         0,
         SwipeCard(
           movie: movie,
-          color: colors[_colorIndex++ % 10],
           swipeLeft: _dislikeMovie,
           swipeRight: _likeMovie,
         ),
@@ -95,52 +83,64 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(widget.account.username),
-            Container(
-              height: 300,
-              width: 200,
-              child: Stack(
-                children: _stackItems,
-              ),
-            ),
-            SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(onPressed: () {}, child: Text("Like")),
-                SizedBox(width: 20),
-                ElevatedButton(onPressed: () {}, child: Text("Dislike"))
-              ],
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                List<int> likedMovieIds = [];
-                List<int> dislikedMovieIds = [];
-                if (_likedMovies.length < 15) {
-                  print('need more movies');
-                } else {
-                  _likedMovies.forEach((element) {
-                    likedMovieIds.add(element.id);
-                  });
-                }
+        child: FutureBuilder(
+          future: myFuture,
+          builder: (context, snapshot) {
+            if (snapshot.hasData && snapshot.data!) {
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(widget.account.username),
+                  Container(
+                    padding: EdgeInsets.all(10),
+                    height: 600,
+                    width: 400,
+                    child: Stack(
+                      children: _stackItems,
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ElevatedButton(onPressed: () {}, child: Text("Like")),
+                      SizedBox(width: 20),
+                      ElevatedButton(onPressed: () {}, child: Text("Dislike"))
+                    ],
+                  ),
+                  SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () {
+                      List<int> likedMovieIds = [];
+                      List<int> dislikedMovieIds = [];
 
-                _dislikedMovies.forEach((element) {
-                  dislikedMovieIds.add(element.id);
-                });
+                      if (_likedMovies.length >= 15) {
+                        _likedMovies.forEach((element) {
+                          likedMovieIds.add(element.id);
+                        });
 
-                Map<String, List<int>> map = {
-                  "liked": likedMovieIds,
-                  "disliked": dislikedMovieIds
-                };
-                print(map);
-              },
-              child: Text('Recommend'),
-            )
-          ],
+                        _dislikedMovies.forEach((element) {
+                          dislikedMovieIds.add(element.id);
+                        });
+
+                        Map<String, List<int>> map = {
+                          "liked": likedMovieIds,
+                          "disliked": dislikedMovieIds
+                        };
+                        print(map);
+                      } else {
+                        showError(context, 'Like more movies',
+                            'Please like at least ${15 - _likedMovies.length} more movies before asking for recommendations.');
+                      }
+                    },
+                    child: Text('Recommend'),
+                  )
+                ],
+              );
+            } else {
+              return CircularProgressIndicator();
+            }
+          },
         ),
       ),
     );
