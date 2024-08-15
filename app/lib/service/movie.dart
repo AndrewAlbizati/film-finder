@@ -90,4 +90,28 @@ class Movie {
       throw Error();
     }
   }
+
+  static Future<List<Movie>> batchRecommend(
+      Map<String, List<int>> movies) async {
+    List<int> movieIds = [];
+
+    Uri getUri = getUrl("/api/movie/batchrecommend/");
+    final http.Response response = await http.post(
+      getUri,
+      body: jsonEncode(movies),
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      List<dynamic> rawDecode = jsonDecode(response.body);
+
+      for (var item in rawDecode) {
+        movieIds.add(int.parse(item));
+      }
+
+      return await getBatchMovies(movieIds);
+    } else {
+      throw Error();
+    }
+  }
 }

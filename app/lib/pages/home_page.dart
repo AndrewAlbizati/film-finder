@@ -1,3 +1,4 @@
+import 'package:app/pages/recommend_page.dart';
 import 'package:app/service/account.dart';
 import 'package:app/service/movie.dart';
 import 'package:app/widgets/error_popup.dart';
@@ -13,8 +14,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  late final Future myFuture;
-
   final int movieBufferSize = 50;
   final int minimumRefreshCount = 10;
 
@@ -28,7 +27,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    myFuture = _loadMovies();
+    _loadMovies();
   }
 
   Future<void> _loadMovies() async {
@@ -83,64 +82,58 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: FutureBuilder(
-          future: myFuture,
-          builder: (context, snapshot) {
-            if (snapshot.hasData && snapshot.data!) {
-              return Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(widget.account.username),
-                  Container(
-                    padding: EdgeInsets.all(10),
-                    height: 600,
-                    width: 400,
-                    child: Stack(
-                      children: _stackItems,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(widget.account.username),
+            Container(
+              padding: EdgeInsets.all(10),
+              height: 600,
+              width: 400,
+              child: Stack(
+                children: _stackItems,
+              ),
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () async {
+                List<int> likedMovieIds = [];
+                List<int> dislikedMovieIds = [];
+
+                if (_likedMovies.length >= 15) {
+                  _likedMovies.forEach((element) {
+                    likedMovieIds.add(element.id);
+                  });
+
+                  _dislikedMovies.forEach((element) {
+                    dislikedMovieIds.add(element.id);
+                  });
+
+                  Map<String, List<int>> map = {
+                    "liked": likedMovieIds,
+                    "disliked": dislikedMovieIds
+                  };
+
+                  List<Movie> movies = await Movie.batchRecommend(map);
+                  movies = movies.sublist(0, 20);
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => RecommendPage(
+                        account: widget.account,
+                        recommendedMovies: movies,
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ElevatedButton(onPressed: () {}, child: Text("Like")),
-                      SizedBox(width: 20),
-                      ElevatedButton(onPressed: () {}, child: Text("Dislike"))
-                    ],
-                  ),
-                  SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () {
-                      List<int> likedMovieIds = [];
-                      List<int> dislikedMovieIds = [];
-
-                      if (_likedMovies.length >= 15) {
-                        _likedMovies.forEach((element) {
-                          likedMovieIds.add(element.id);
-                        });
-
-                        _dislikedMovies.forEach((element) {
-                          dislikedMovieIds.add(element.id);
-                        });
-
-                        Map<String, List<int>> map = {
-                          "liked": likedMovieIds,
-                          "disliked": dislikedMovieIds
-                        };
-                        print(map);
-                      } else {
-                        showError(context, 'Like more movies',
-                            'Please like at least ${15 - _likedMovies.length} more movies before asking for recommendations.');
-                      }
-                    },
-                    child: Text('Recommend'),
-                  )
-                ],
-              );
-            } else {
-              return CircularProgressIndicator();
-            }
-          },
+                  );
+                } else {
+                  showError(context, 'Like more movies',
+                      'Please like at least ${15 - _likedMovies.length} more movies before asking for recommendations.');
+                }
+              },
+              child: Text('Recommend'),
+            )
+          ],
         ),
       ),
     );
