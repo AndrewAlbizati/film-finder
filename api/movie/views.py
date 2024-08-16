@@ -39,22 +39,16 @@ def get_routes(request):
             'description': 'Returns status information for a movie (Requires authentication)'
         },
         {
-            'Endpoint': '/like/<id>',
+            'Endpoint': '/batchrecommend/',
             'method': 'POST',
-            'body': None,
-            'description': 'Adds a like status for a movie (Requires authentication)'
+            'body': {'liked': [], 'disliked': []},
+            'description': 'Recommends movies based off of likes and dislikes'
         },
         {
-            'Endpoint': '/dislike/<id>',
+            'Endpoint': '/batchget/',
             'method': 'POST',
-            'body': None,
-            'description': 'Adds a dislike status for a movie (Requires authentication)'
-        },
-        {
-            'Endpoint': '/unwatched/<id>',
-            'method': 'POST',
-            'body': None,
-            'description': 'Adds an unwatched status for a movie (Requires authentication)'
+            'body': [],
+            'description': 'Gets the data for a list of movie IDs'
         },
     ]
     return Response(routes)
@@ -78,57 +72,6 @@ def get_movie(request, pk):
 
     return Response(movie)
 
-@api_view(['POST'])
-@authentication_classes([SessionAuthentication, TokenAuthentication])
-@permission_classes([IsAuthenticated])
-def add_liked_movie(request, pk):
-    if not __movie_exists(pk, __get_movies()):
-        return HttpResponseBadRequest("Invalid movie ID provided")
-    
-    movie_id = int(pk)
-    user = User.objects.get(username=request.user.username)
-    status = 'like'
-
-    if len(Movie.objects.filter(user=user, movie_id=movie_id)) != 0:
-        return HttpResponseBadRequest("Movie already has status")
-
-    movie = Movie.objects.create(movie_id=movie_id, user=user, status=status)
-    return Response({f"add liked movie for {request.user.email}, {pk}"})
-
-@api_view(['POST'])
-@authentication_classes([SessionAuthentication, TokenAuthentication])
-@permission_classes([IsAuthenticated])
-def add_disliked_movie(request, pk):
-    if not __movie_exists(pk, __get_movies()):
-        return HttpResponseBadRequest("Invalid movie ID provided")
-
-    movie_id = int(pk)
-    user = User.objects.get(username=request.user.username)
-    status = 'dislike'
-
-    if len(Movie.objects.filter(user=user, movie_id=movie_id)) != 0:
-        return HttpResponseBadRequest("Movie already has status")
-
-    movie = Movie.objects.create(movie_id=movie_id, user=user, status=status)
-    return Response({f"add disliked movie for {request.user.email}, {pk}"})
-
-@api_view(['POST'])
-@authentication_classes([SessionAuthentication, TokenAuthentication])
-@permission_classes([IsAuthenticated])
-def add_unwatched_movie(request, pk):
-    if not __movie_exists(pk, __get_movies()):
-        return HttpResponseBadRequest("Invalid movie ID provided")
-
-    movie_id = int(pk)
-    user = User.objects.get(username=request.user.username)
-    status = 'unwatched'
-
-    if len(Movie.objects.filter(user=user, movie_id=movie_id)) != 0:
-        return HttpResponseBadRequest("Movie already has status")
-
-    movie = Movie.objects.create(movie_id=movie_id, user=user, status=status)
-    return Response({f"add unwatched movie for {request.user.email}, {pk}"})
-
 @api_view(['GET'])
 @authentication_classes([SessionAuthentication, TokenAuthentication])
 @permission_classes([IsAuthenticated])
@@ -148,40 +91,6 @@ def get_movie_status(request, pk):
 
     return Response({"user":user.username, "movie": movie.movie_id, "status": movie.status})
 
-@api_view(['GET'])
-@authentication_classes([SessionAuthentication, TokenAuthentication])
-@permission_classes([IsAuthenticated])
-def recommend(request):
-    user = User.objects.get(username=request.user.username)
-    movies = pickle.load(open("movie/files/movies_list.pkl", "rb"))
-    similarity = pickle.load(open("movie/files/similarity.pkl", "rb"))
-    return_count = 5
-    
-    recommender = {}
-
-    liked_movies = Movie.objects.filter(user=user, status='like')
-    for movie in liked_movies:
-        movie_id = movie.movie_id
-        
-        index = movies[movies['id'] == movie_id].index[0]
-        recommender[str(movie_id)] = -10000
-
-        distance = sorted(list(enumerate(similarity[index])), reverse=True, key=lambda vector:vector[1])
-        
-        for i in distance[1:1+return_count]:
-            movies_id = movies.iloc[i[0]].id
-            recommender.setdefault(str(movies_id), 0)
-            recommender[str(movies_id)] += 1
-
-    keys_to_delete = [key for key in recommender if recommender[key] < 0]
-    for key in keys_to_delete:
-        del recommender[key]
-    
-    sorted_keys = reversed(sorted(recommender, key=lambda k: recommender[k]))
-
-    return Response(sorted_keys)
-    #return Response(recommender)
-
 @api_view(['POST'])
 @authentication_classes([SessionAuthentication, TokenAuthentication])
 @permission_classes([IsAuthenticated])
@@ -197,6 +106,7 @@ def batch_recommend(request):
 
     # Handle liked movies
     for movie_id in liked_movies:    
+        Movie.objects.create(movie_id=movie_id, user=request.user, status='like')
         index = movies[movies['id'] == movie_id].index[0]
         recommender[str(movie_id)] = -10000  # make it so already liked movies won't appear
 
@@ -208,7 +118,8 @@ def batch_recommend(request):
             recommender[str(movies_id)] += 1
     
     # Handle disliked movies
-    for movie_id in disliked_movies:    
+    for movie_id in disliked_movies:
+        Movie.objects.create(movie_id=movie_id, user=request.user, status='dislike')
         index = movies[movies['id'] == movie_id].index[0]
         recommender[str(movie_id)] = -10000  # make it so already disliked movies won't appear
 
