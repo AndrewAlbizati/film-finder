@@ -183,6 +183,8 @@ def recommend(request):
     #return Response(recommender)
 
 @api_view(['POST'])
+@authentication_classes([SessionAuthentication, TokenAuthentication])
+@permission_classes([IsAuthenticated])
 def batch_recommend(request):
     liked_movies = request.data["liked"]
     disliked_movies = request.data["disliked"]
@@ -227,6 +229,8 @@ def batch_recommend(request):
     return Response(sorted_keys)
 
 @api_view(['POST'])
+@authentication_classes([SessionAuthentication, TokenAuthentication])
+@permission_classes([IsAuthenticated])
 def batch_get_movie(request):
     movies = request.data
 

@@ -38,7 +38,8 @@ class _HomePageState extends State<HomePage> {
     int endIndex = _movieIndexStart;
 
     movieIds = movieIds.sublist(startIndex, endIndex);
-    List<Movie> movies = await Movie.getBatchMovies(movieIds);
+    List<Movie> movies =
+        await Movie.getBatchMovies(movieIds, widget.account.token);
 
     movies.forEach((element) {
       _addMovie(element);
@@ -114,7 +115,8 @@ class _HomePageState extends State<HomePage> {
                     "disliked": dislikedMovieIds
                   };
 
-                  List<Movie> movies = await Movie.batchRecommend(map);
+                  List<Movie> movies =
+                      await Movie.batchRecommend(map, widget.account.token);
                   movies = movies.sublist(0, 20);
 
                   Navigator.push(

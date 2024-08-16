@@ -1,12 +1,9 @@
-import 'dart:convert';
-
 import 'package:app/pages/home_page.dart';
 import 'package:app/pages/signup_page.dart';
 import 'package:app/service/account.dart';
-import 'package:app/service/url.dart';
 import 'package:app/widgets/error_popup.dart';
+import 'package:uuid/uuid.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -67,8 +64,8 @@ class _LoginPageState extends State<LoginPage> {
                   child: Text('Sign Up'),
                 ),
                 TextButton(
-                  onPressed: () {
-                    _nextPage(Account.createGuest());
+                  onPressed: () async {
+                    _guestLogin();
                   },
                   child: Text('Continue as Guest'),
                 ),
@@ -80,33 +77,40 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  void _login(String username, String password) async {
-    Uri loginUri = getUrl("/api/account/login/");
+  void _guestLogin() async {
+    String username = generateUniqueUsername();
+    String password = generateUniqueUsername();
+    Account? account =
+        await Account.signup('$username@email.com', username, password);
 
-    // Constructing the request body
-    final Map<String, String> requestBody = {
-      'username': username,
-      'password': password,
-    };
-
-    // Making the POST request
-    final http.Response response = await http.post(
-      loginUri,
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode(requestBody),
-    );
-
-    if (response.statusCode == 200) {
-      Account account = Account.fromResponseBody(json.decode(response.body));
+    if (account != null) {
       _nextPage(account);
     } else {
-      showError(
-          context, 'Login Failed', 'Incorrect username/password combination.');
+      showError(context, 'Login Failed', 'Please try again.');
+    }
+  }
+
+  void _login(String username, String password) async {
+    Account? account = await Account.login(username, password);
+
+    if (account != null) {
+      _nextPage(account);
+    } else {
+      showError(context, 'Login Failed', 'Please try again.');
     }
   }
 
   void _nextPage(Account account) {
     Navigator.of(context).pushReplacement(new MaterialPageRoute(
         builder: (BuildContext context) => HomePage(account: account)));
+  }
+
+  String generateUniqueUsername() {
+    var uuid = Uuid();
+    String uniqueId = uuid.v4(); // Generates a random UUID
+
+    String uniqueUsername = "Guest_$uniqueId";
+
+    return uniqueUsername;
   }
 }

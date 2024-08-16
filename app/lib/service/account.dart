@@ -1,5 +1,8 @@
 import 'dart:convert';
 
+import 'package:app/service/url.dart';
+import 'package:http/http.dart' as http;
+
 class Account {
   String username;
   String email;
@@ -10,18 +13,6 @@ class Account {
     required this.email,
     required this.token,
   });
-
-  Account copyWith({
-    String? username,
-    String? email,
-    String? token,
-  }) {
-    return Account(
-      username: username ?? this.username,
-      email: email ?? this.email,
-      token: token ?? this.token,
-    );
-  }
 
   Map<String, dynamic> toMap() {
     return {
@@ -47,12 +38,52 @@ class Account {
     );
   }
 
-  factory Account.createGuest() {
-    return Account(
-      email: '',
-      username: '',
-      token: '',
+  static Future<Account?> login(String username, String password) async {
+    Uri loginUri = getUrl("/api/account/login/");
+
+    // Constructing the request body
+    final Map<String, String> requestBody = {
+      'username': username,
+      'password': password,
+    };
+
+    // Making the POST request
+    final http.Response response = await http.post(
+      loginUri,
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode(requestBody),
     );
+
+    if (response.statusCode == 200) {
+      return Account.fromResponseBody(json.decode(response.body));
+    } else {
+      return null;
+    }
+  }
+
+  static Future<Account?> signup(
+      String email, String username, String password) async {
+    Uri signupUrl = getUrl("/api/account/signup/");
+
+    // Constructing the request body
+    final Map<String, String> requestBody = {
+      'email': email,
+      'username': username,
+      'password': password,
+    };
+
+    // Making the POST request
+    final http.Response response = await http.post(
+      signupUrl,
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode(requestBody),
+    );
+
+    if (response.statusCode == 200) {
+      return Account.fromResponseBody(json.decode(response.body));
+    } else {
+      return null;
+    }
   }
 
   String toJson() => json.encode(toMap());
@@ -63,19 +94,5 @@ class Account {
   @override
   String toString() {
     return 'Account(username: $username, email: $email, token: $token)';
-  }
-
-  @override
-  bool operator ==(covariant Account other) {
-    if (identical(this, other)) return true;
-
-    return other.username == username &&
-        other.email == email &&
-        other.token == token;
-  }
-
-  @override
-  int get hashCode {
-    return username.hashCode ^ email.hashCode ^ token.hashCode;
   }
 }

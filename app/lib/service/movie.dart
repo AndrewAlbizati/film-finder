@@ -69,14 +69,18 @@ class Movie {
     }
   }
 
-  static Future<List<Movie>> getBatchMovies(List<int> movieIds) async {
+  static Future<List<Movie>> getBatchMovies(
+      List<int> movieIds, String token) async {
     List<Movie> movies = [];
 
     Uri getUri = getUrl("/api/movie/batchget/");
     final http.Response response = await http.post(
       getUri,
       body: jsonEncode(movieIds),
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Token $token'
+      },
     );
 
     if (response.statusCode == 200) {
@@ -92,14 +96,17 @@ class Movie {
   }
 
   static Future<List<Movie>> batchRecommend(
-      Map<String, List<int>> movies) async {
+      Map<String, List<int>> movies, String token) async {
     List<int> movieIds = [];
 
     Uri getUri = getUrl("/api/movie/batchrecommend/");
     final http.Response response = await http.post(
       getUri,
       body: jsonEncode(movies),
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Token $token'
+      },
     );
 
     if (response.statusCode == 200) {
@@ -109,7 +116,7 @@ class Movie {
         movieIds.add(int.parse(item));
       }
 
-      return await getBatchMovies(movieIds);
+      return await getBatchMovies(movieIds, token);
     } else {
       throw Error();
     }

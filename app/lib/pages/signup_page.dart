@@ -1,11 +1,7 @@
-import 'dart:convert';
-
 import 'package:app/pages/home_page.dart';
 import 'package:app/service/account.dart';
-import 'package:app/service/url.dart';
 import 'package:app/widgets/error_popup.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 
 class SignupPage extends StatefulWidget {
   const SignupPage({Key? key}) : super(key: key);
@@ -18,6 +14,7 @@ class _SignupPageState extends State<SignupPage> {
   TextEditingController _emailController = TextEditingController();
   TextEditingController _usernameController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
+  TextEditingController _confirmPasswordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -61,10 +58,25 @@ class _SignupPageState extends State<SignupPage> {
                   ),
                 ),
                 SizedBox(height: 20),
+                TextField(
+                  controller: _confirmPasswordController,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'Confirm Password',
+                  ),
+                ),
+                SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () async {
-                    _signup(_emailController.text, _usernameController.text,
-                        _passwordController.text);
+                    if (_passwordController.text ==
+                        _confirmPasswordController.text) {
+                      _signup(_emailController.text, _usernameController.text,
+                          _passwordController.text);
+                    } else {
+                      showError(context, 'Error',
+                          'Passwords don\'t match, please try again.');
+                    }
                   },
                   child: Text('Sign Up'),
                 ),
@@ -77,25 +89,9 @@ class _SignupPageState extends State<SignupPage> {
   }
 
   void _signup(String email, String username, String password) async {
-    Uri signupUrl = getUrl("/api/account/signup/");
+    Account? account = await Account.signup(email, username, password);
 
-    // Constructing the request body
-    final Map<String, String> requestBody = {
-      'email': email,
-      'username': username,
-      'password': password,
-    };
-
-    // Making the POST request
-    final http.Response response = await http.post(
-      signupUrl,
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode(requestBody),
-    );
-
-    if (response.statusCode == 200) {
-      Account account = Account.fromResponseBody(json.decode(response.body));
-
+    if (account != null) {
       Navigator.of(context).pushReplacement(new MaterialPageRoute(
           builder: (BuildContext context) => HomePage(account: account)));
     } else {
