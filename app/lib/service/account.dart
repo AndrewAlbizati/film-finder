@@ -47,6 +47,14 @@ class Account {
     );
   }
 
+  factory Account.createGuest() {
+    return Account(
+      email: '',
+      username: '',
+      token: '',
+    );
+  }
+
   String toJson() => json.encode(toMap());
 
   factory Account.fromJson(String source) =>

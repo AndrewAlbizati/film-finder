@@ -68,7 +68,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 TextButton(
                   onPressed: () {
-                    print('continue as guest');
+                    _nextPage(Account.createGuest());
                   },
                   child: Text('Continue as Guest'),
                 ),
@@ -98,12 +98,15 @@ class _LoginPageState extends State<LoginPage> {
 
     if (response.statusCode == 200) {
       Account account = Account.fromResponseBody(json.decode(response.body));
-
-      Navigator.of(context).pushReplacement(new MaterialPageRoute(
-          builder: (BuildContext context) => HomePage(account: account)));
+      _nextPage(account);
     } else {
       showError(
           context, 'Login Failed', 'Incorrect username/password combination.');
     }
+  }
+
+  void _nextPage(Account account) {
+    Navigator.of(context).pushReplacement(new MaterialPageRoute(
+        builder: (BuildContext context) => HomePage(account: account)));
   }
 }
