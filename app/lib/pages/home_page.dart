@@ -31,7 +31,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _loadMovies() async {
-    List<int> movieIds = await Movie.getMovieIds();
+    List<int> movieIds = await Movie.getMovieIds(widget.account.token);
 
     int startIndex = _movieIndexStart;
     _movieIndexStart += movieBufferSize;

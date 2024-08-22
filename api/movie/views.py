@@ -1,16 +1,13 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.authtoken.models import Token
 
 from rest_framework.decorators import authentication_classes, permission_classes
 from rest_framework.authentication import SessionAuthentication, TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 
 from django.contrib.auth.models import User
-from django.shortcuts import get_object_or_404
 
-from django.http import HttpResponseBadRequest, HttpResponseNotFound
+from django.http import HttpResponseBadRequest
 
 from .models import Movie
 import json
@@ -24,13 +21,13 @@ def get_routes(request):
             'Endpoint': '/list/',
             'method': 'GET',
             'body': None,
-            'description': 'Returns a list of movie IDs sorted by popularity'
+            'description': 'Returns a list of movie IDs sorted by popularity (Requires authentication)'
         },
         {
             'Endpoint': '/<id>/',
             'method': 'GET',
             'body': None,
-            'description': 'Returns information for a movie based on ID'
+            'description': 'Returns information for a movie based on ID (Requires authentication)'
         },
         {
             'Endpoint': '/status/<id>/',
@@ -42,24 +39,34 @@ def get_routes(request):
             'Endpoint': '/batchrecommend/',
             'method': 'POST',
             'body': {'liked': [], 'disliked': []},
-            'description': 'Recommends movies based off of likes and dislikes'
+            'description': 'Recommends movies based off of likes and dislikes (Requires authentication)'
         },
         {
             'Endpoint': '/batchget/',
             'method': 'POST',
             'body': [],
-            'description': 'Gets the data for a list of movie IDs'
+            'description': 'Gets the data for a list of movie IDs (Requires authentication)'
         },
     ]
     return Response(routes)
 
 @api_view(['GET'])
+@authentication_classes([SessionAuthentication, TokenAuthentication])
+@permission_classes([IsAuthenticated])
 def list_movies(request):
     with open("movie/files/popular.json", "r") as f:
         popular_movie_list = json.load(f)
+    
+    movies = Movie.objects.filter(user=request.user)
+
+    for movie in movies:
+        if movie.movie_id in popular_movie_list:
+            popular_movie_list.remove(movie.movie_id)
 
     return Response(popular_movie_list)
 
+@api_view(['GET'])
+@authentication_classes([SessionAuthentication, TokenAuthentication])
 @api_view(['GET'])
 def get_movie(request, pk):
     movie_list = __get_movies()
@@ -104,9 +111,15 @@ def batch_recommend(request):
     
     recommender = {}
 
-    # Handle liked movies
-    for movie_id in liked_movies:    
+    # Add movies to db
+    for movie_id in liked_movies:
         Movie.objects.create(movie_id=movie_id, user=request.user, status='like')
+    for movie_id in disliked_movies:
+        Movie.objects.create(movie_id=movie_id, user=request.user, status='dislike')
+    
+    # Handle liked movies
+    for movie in Movie.objects.filter(user=request.user, status='like'):
+        movie_id = movie.movie_id
         index = movies[movies['id'] == movie_id].index[0]
         recommender[str(movie_id)] = -10000  # make it so already liked movies won't appear
 
@@ -116,10 +129,10 @@ def batch_recommend(request):
             movies_id = movies.iloc[i[0]].id
             recommender.setdefault(str(movies_id), 0)
             recommender[str(movies_id)] += 1
-    
+
     # Handle disliked movies
-    for movie_id in disliked_movies:
-        Movie.objects.create(movie_id=movie_id, user=request.user, status='dislike')
+    for movie in Movie.objects.filter(user=request.user, status='dislike'):
+        movie_id = movie.movie_id
         index = movies[movies['id'] == movie_id].index[0]
         recommender[str(movie_id)] = -10000  # make it so already disliked movies won't appear
 

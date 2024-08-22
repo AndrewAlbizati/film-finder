@@ -39,11 +39,14 @@ class Movie {
         id: jsonResponse['id']);
   }
 
-  static Future<Movie> fromId(int id) async {
+  static Future<Movie> fromId(int id, String token) async {
     Uri getUri = getUrl("/api/movie/get/$id/");
     final http.Response response = await http.get(
       getUri,
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Token $token'
+      },
     );
 
     if (response.statusCode == 200) {
@@ -53,11 +56,14 @@ class Movie {
     }
   }
 
-  static Future<List<int>> getMovieIds() async {
+  static Future<List<int>> getMovieIds(String token) async {
     Uri getUri = getUrl("/api/movie/list/");
     final http.Response response = await http.get(
       getUri,
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Token $token'
+      },
     );
 
     if (response.statusCode == 200) {
