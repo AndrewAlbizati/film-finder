@@ -12,6 +12,7 @@ from django.http import HttpResponseBadRequest
 from .models import Movie
 import json
 import pickle
+import pandas as pd
 
 
 @api_view(['GET'])
@@ -54,27 +55,27 @@ def get_routes(request):
 @authentication_classes([SessionAuthentication, TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def list_movies(request):
-    with open("movie/files/popular.json", "r") as f:
-        popular_movie_list = json.load(f)
+    popular_movie_df = __get_movie_dataframe()
     
-    movies = Movie.objects.filter(user=request.user)
+    user_movies = Movie.objects.filter(user=request.user).values_list('movie_id', flat=True)
+    
+    # Convert user movie IDs to a set for faster lookup
+    user_movie_ids = set(user_movies)
 
-    for movie in movies:
-        if movie.movie_id in popular_movie_list:
-            popular_movie_list.remove(movie.movie_id)
+    filtered_df = popular_movie_df[~popular_movie_df.index.isin(user_movie_ids)]
+    id_list = filtered_df.index.tolist()
 
-    return Response(popular_movie_list)
+    return Response(id_list)
 
 @api_view(['GET'])
 @authentication_classes([SessionAuthentication, TokenAuthentication])
-@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_movie(request, pk):
-    movie_list = __get_movies()
-    
-    if not __movie_exists(pk, movie_list):
+    movie = __get_movie_by_id(int(pk))
+
+    if movie is None:
         return HttpResponseBadRequest("Invalid movie ID provided")
 
-    movie = movie_list[pk]
     movie["id"] = int(pk)
 
     return Response(movie)
@@ -83,7 +84,7 @@ def get_movie(request, pk):
 @authentication_classes([SessionAuthentication, TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def get_movie_status(request, pk):
-    if not __movie_exists(pk, __get_movies()):
+    if not __movie_exists(int(pk)):
         return HttpResponseBadRequest("Invalid movie ID provided")
 
     movie_id = int(pk)
@@ -105,7 +106,7 @@ def batch_recommend(request):
     liked_movies = request.data["liked"]
     disliked_movies = request.data["disliked"]
 
-    movies = pickle.load(open("movie/files/movies_list.pkl", "rb"))
+    movies = pickle.load(open("movie/files/movies.pkl", "rb"))
     similarity = pickle.load(open("movie/files/similarity.pkl", "rb"))
     return_count = 5
     
@@ -113,36 +114,42 @@ def batch_recommend(request):
 
     # Add movies to db
     for movie_id in liked_movies:
-        Movie.objects.create(movie_id=movie_id, user=request.user, status='like')
+        Movie.objects.get_or_create(movie_id=movie_id, user=request.user, status='like')
     for movie_id in disliked_movies:
-        Movie.objects.create(movie_id=movie_id, user=request.user, status='dislike')
+        Movie.objects.get_or_create(movie_id=movie_id, user=request.user, status='dislike')
     
     # Handle liked movies
     for movie in Movie.objects.filter(user=request.user, status='like'):
-        movie_id = movie.movie_id
-        index = movies[movies['id'] == movie_id].index[0]
-        recommender[str(movie_id)] = -10000  # make it so already liked movies won't appear
-
-        distance = sorted(list(enumerate(similarity[index])), reverse=True, key=lambda vector:vector[1])
+        if not movie.movie_id in movies.index:
+            continue
+    
+        movie_index = movies.index.get_loc(movie.movie_id)
         
+        # Calculate similarity scores
+        distance = sorted(list(enumerate(similarity[movie_index])), reverse=True, key=lambda vector: vector[1])
+
+        # Recommend similar movies, excluding the movie itself
         for i in distance[1:1+return_count]:
-            movies_id = movies.iloc[i[0]].id
+            movies_id = movies.iloc[i[0]].name  # Get the ID from the DataFrame index
             recommender.setdefault(str(movies_id), 0)
             recommender[str(movies_id)] += 1
-
+            
     # Handle disliked movies
     for movie in Movie.objects.filter(user=request.user, status='dislike'):
-        movie_id = movie.movie_id
-        index = movies[movies['id'] == movie_id].index[0]
+        if not movie.movie_id in movies.index:
+            continue
+    
+        movie_index = movies.index.get_loc(movie.movie_id)
+        
         recommender[str(movie_id)] = -10000  # make it so already disliked movies won't appear
 
-        distance = sorted(list(enumerate(similarity[index])), reverse=True, key=lambda vector:vector[1])
-        
+        distance = sorted(list(enumerate(similarity[movie_index])), reverse=True, key=lambda vector: vector[1])
+
         for i in distance[1:1+return_count]:
-            movies_id = movies.iloc[i[0]].id
+            movies_id = movies.iloc[i[0]].name
             recommender.setdefault(str(movies_id), 0)
             recommender[str(movies_id)] -= 1
-
+    
     # Remove keys with negative values
     keys_to_delete = [key for key in recommender if recommender[key] < 0]
     for key in keys_to_delete:
@@ -160,25 +167,31 @@ def batch_get_movie(request):
 
     response = []
 
-    movie_list = __get_movies()
-
     for movie_id in movies:
-        if not __movie_exists(str(movie_id), movie_list):
-            return HttpResponseBadRequest("Invalid movie ID provided")
+        movie = __get_movie_by_id(int(movie_id))
 
-        movie = movie_list[str(movie_id)]
-        movie["id"] = movie_id
+        if movie is None:
+            return HttpResponseBadRequest("Invalid movie ID provided")
         
+        movie["id"] = str(movie_id)
+
         response.append(movie)
         
     return Response(response)
 
-def __get_movies():
-    with open("movie/files/movies.json", "r") as f:
-        movie_list = json.load(f)
+def __get_movie_by_id(movie_id: int):
+    movies = __get_movie_dataframe()
+    if __movie_exists(movie_id):
+        return movies.loc[movie_id].to_dict()
+    return None
 
-    return movie_list
+def __movie_exists(movie_id: int):
+    movies = __get_movie_dataframe()
+    return movie_id in movies.index
 
-def __movie_exists(movie_id, movie_list):
-    return movie_id in movie_list
-    
+def __get_movie_dataframe():
+    return pd.read_pickle("movie/files/movies.pkl")
+
+def __get_movie_similarity_matrix():
+    return pickle.load(open("movie/files/similarity.pkl", "rb"))
+

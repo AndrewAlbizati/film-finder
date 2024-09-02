@@ -1,7 +1,6 @@
 # Created by https://www.toptal.com/developers/gitignore/api/python,macos,django
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,macos,django
 
-/movie/files/similarity.pkl
 .idea
 
 ### Django ###

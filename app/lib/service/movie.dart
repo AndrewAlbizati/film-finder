@@ -36,7 +36,7 @@ class Movie {
         releaseDate: jsonResponse['release_date'],
         voteCount: jsonResponse['vote_count'],
         poster: jsonResponse['poster'],
-        id: jsonResponse['id']);
+        id: int.parse(jsonResponse['id']));
   }
 
   static Future<Movie> fromId(int id, String token) async {
