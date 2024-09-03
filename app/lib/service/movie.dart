@@ -90,7 +90,7 @@ class Movie {
     );
 
     if (response.statusCode == 200) {
-      List<dynamic> rawDecode = jsonDecode(response.body);
+      List<dynamic> rawDecode = jsonDecode(utf8.decode(response.bodyBytes));
 
       for (var item in rawDecode) {
         movies.add(Movie.fromResponseBody(item));
@@ -116,7 +116,7 @@ class Movie {
     );
 
     if (response.statusCode == 200) {
-      List<dynamic> rawDecode = jsonDecode(response.body);
+      List<dynamic> rawDecode = jsonDecode(utf8.decode(response.bodyBytes));
 
       for (var item in rawDecode) {
         movieIds.add(int.parse(item));

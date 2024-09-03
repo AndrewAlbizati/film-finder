@@ -106,8 +106,8 @@ def batch_recommend(request):
     liked_movies = request.data["liked"]
     disliked_movies = request.data["disliked"]
 
-    movies = pickle.load(open("movie/files/movies.pkl", "rb"))
-    similarity = pickle.load(open("movie/files/similarity.pkl", "rb"))
+    movies = __get_movie_dataframe()
+    similarity = __get_movie_similarity_matrix()
     return_count = 5
     
     recommender = {}
@@ -194,4 +194,3 @@ def __get_movie_dataframe():
 
 def __get_movie_similarity_matrix():
     return pickle.load(open("movie/files/similarity.pkl", "rb"))
-
