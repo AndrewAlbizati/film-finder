@@ -17,11 +17,9 @@ class SwipeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Swipable(
       onSwipeRight: (finalPosition) {
-        print("Swipe right");
         swipeRight(movie);
       },
       onSwipeLeft: (finalPosition) {
-        print("Swipe left");
         swipeLeft(movie);
       },
       child: Image.network(movie.poster),

@@ -78,10 +78,12 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _guestLogin() async {
+    showLoaderDialog(context);
     String username = generateUniqueUsername();
     String password = generateUniqueUsername();
     Account? account =
         await Account.signup('$username@email.com', username, password);
+    Navigator.pop(context);
 
     if (account != null) {
       _nextPage(account);
@@ -91,7 +93,9 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _login(String username, String password) async {
+    showLoaderDialog(context);
     Account? account = await Account.login(username, password);
+    Navigator.pop(context);
 
     if (account != null) {
       _nextPage(account);
@@ -112,5 +116,24 @@ class _LoginPageState extends State<LoginPage> {
     String uniqueUsername = "Guest_$uniqueId";
 
     return uniqueUsername;
+  }
+
+  void showLoaderDialog(BuildContext context) {
+    AlertDialog alert = AlertDialog(
+      content: new Row(
+        children: [
+          CircularProgressIndicator(),
+          Container(
+              margin: EdgeInsets.only(left: 7), child: Text("Loading...")),
+        ],
+      ),
+    );
+    showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (BuildContext context) {
+        return alert;
+      },
+    );
   }
 }

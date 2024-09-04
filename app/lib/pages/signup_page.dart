@@ -89,7 +89,9 @@ class _SignupPageState extends State<SignupPage> {
   }
 
   void _signup(String email, String username, String password) async {
+    showLoaderDialog(context);
     Account? account = await Account.signup(email, username, password);
+    Navigator.pop(context);
 
     if (account != null) {
       Navigator.of(context).pushReplacement(new MaterialPageRoute(
@@ -98,5 +100,24 @@ class _SignupPageState extends State<SignupPage> {
       showError(context, 'Sign up Failed',
           'Please try again with a different username');
     }
+  }
+
+  void showLoaderDialog(BuildContext context) {
+    AlertDialog alert = AlertDialog(
+      content: new Row(
+        children: [
+          CircularProgressIndicator(),
+          Container(
+              margin: EdgeInsets.only(left: 7), child: Text("Loading...")),
+        ],
+      ),
+    );
+    showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (BuildContext context) {
+        return alert;
+      },
+    );
   }
 }

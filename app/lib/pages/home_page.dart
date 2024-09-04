@@ -101,43 +101,66 @@ class _HomePageState extends State<HomePage> {
                 List<int> likedMovieIds = [];
                 List<int> dislikedMovieIds = [];
 
-                if (_likedMovies.length >= 15) {
-                  _likedMovies.forEach((element) {
-                    likedMovieIds.add(element.id);
-                  });
-
-                  _dislikedMovies.forEach((element) {
-                    dislikedMovieIds.add(element.id);
-                  });
-
-                  Map<String, List<int>> map = {
-                    "liked": likedMovieIds,
-                    "disliked": dislikedMovieIds
-                  };
-
-                  List<Movie> movies =
-                      await Movie.batchRecommend(map, widget.account.token);
-                  movies = movies.sublist(0, 20);
-
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => RecommendPage(
-                        account: widget.account,
-                        recommendedMovies: movies,
-                      ),
-                    ),
-                  );
-                } else {
+                if (_likedMovies.length < 15) {
                   showError(context, 'Like more movies',
                       'Please like at least ${15 - _likedMovies.length} more movies before asking for recommendations.');
+                  return;
                 }
+
+                showLoaderDialog(context);
+                _likedMovies.forEach((element) {
+                  likedMovieIds.add(element.id);
+                });
+
+                _dislikedMovies.forEach((element) {
+                  dislikedMovieIds.add(element.id);
+                });
+
+                Map<String, List<int>> map = {
+                  "liked": likedMovieIds,
+                  "disliked": dislikedMovieIds
+                };
+
+                List<Movie> movies =
+                    await Movie.batchRecommend(map, widget.account.token);
+                movies = movies.sublist(0, 20);
+
+                Navigator.pop(context);
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => RecommendPage(
+                      account: widget.account,
+                      recommendedMovies: movies,
+                    ),
+                  ),
+                );
               },
               child: Text('Recommend'),
             )
           ],
         ),
       ),
+    );
+  }
+
+  void showLoaderDialog(BuildContext context) {
+    AlertDialog alert = AlertDialog(
+      content: new Row(
+        children: [
+          CircularProgressIndicator(),
+          Container(
+              margin: EdgeInsets.only(left: 7), child: Text("Loading...")),
+        ],
+      ),
+    );
+    showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (BuildContext context) {
+        return alert;
+      },
     );
   }
 }
