@@ -82,64 +82,65 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('FilmFinder')),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: EdgeInsets.all(10),
-              height: 600,
-              width: 400,
-              child: Stack(
-                children: _stackItems,
-              ),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () async {
-                List<int> likedMovieIds = [];
-                List<int> dislikedMovieIds = [];
+      appBar: AppBar(
+        title: Text('FilmFinder'),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              List<int> likedMovieIds = [];
+              List<int> dislikedMovieIds = [];
 
-                if (_likedMovies.length < 15) {
-                  showError(context, 'Like more movies',
-                      'Please like at least ${15 - _likedMovies.length} more movies before asking for recommendations.');
-                  return;
-                }
+              if (_likedMovies.length < 15) {
+                showError(context, 'Like more movies',
+                    'Please like at least ${15 - _likedMovies.length} more movies before asking for recommendations.');
+                return;
+              }
 
-                showLoaderDialog(context);
-                _likedMovies.forEach((element) {
-                  likedMovieIds.add(element.id);
-                });
+              showLoaderDialog(context);
+              _likedMovies.forEach((element) {
+                likedMovieIds.add(element.id);
+              });
 
-                _dislikedMovies.forEach((element) {
-                  dislikedMovieIds.add(element.id);
-                });
+              _dislikedMovies.forEach((element) {
+                dislikedMovieIds.add(element.id);
+              });
 
-                Map<String, List<int>> map = {
-                  "liked": likedMovieIds,
-                  "disliked": dislikedMovieIds
-                };
+              Map<String, List<int>> map = {
+                "liked": likedMovieIds,
+                "disliked": dislikedMovieIds
+              };
 
-                List<Movie> movies =
-                    await Movie.batchRecommend(map, widget.account.token);
-                movies = movies.sublist(0, 20);
+              List<Movie> movies =
+                  await Movie.batchRecommend(map, widget.account.token);
+              movies = movies.sublist(0, 20);
 
-                Navigator.pop(context);
+              Navigator.pop(context);
 
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => RecommendPage(
-                      account: widget.account,
-                      recommendedMovies: movies,
-                    ),
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => RecommendPage(
+                    account: widget.account,
+                    recommendedMovies: movies,
                   ),
-                );
-              },
-              child: Text('Recommend'),
-            )
-          ],
+                ),
+              );
+            },
+            child: Text(
+              'Recommend',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+      body: Center(
+        child: Container(
+          padding: EdgeInsets.all(10),
+          height: 600,
+          width: 400,
+          child: Stack(
+            children: _stackItems,
+          ),
         ),
       ),
     );
