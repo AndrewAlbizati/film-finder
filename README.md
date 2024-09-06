@@ -1,14 +1,17 @@
 # Film Finder
 A fullstack application developed using Flutter and Django that allows users to discover new movies based on their preferences. The app leverages an AI recommendation algorithm to suggest films tailored to what users like or dislike.
 
-## Table of Contents
-
 ## Demo
 This app is deployed to the web via Firebase, and can be found [here](https://film-finder-dd678.firebaseapp.com/).
 
 The API is deployed to the web via Render, and can be found [here](https://film-finder-up8b.onrender.com/api/).
 
 ## Features
+- AI recommendation algorithm using a token vectorizer and cosine similarity
+- Intuitive UI for swiping right on liked movies, and left on disliked movies
+- User authentication utilizing Django's token-based system
+- Sensitive account information secured with an encryption algorithm
+- Responsive design with mobile-first approach
 
 ## Tech Stack
 ### Frontend
@@ -19,6 +22,12 @@ The API is deployed to the web via Render, and can be found [here](https://film-
 - SQLite
 
 ## Getting Started
+Follow these instructions to get a copy of the project up and running on your local machine for development and testing purposes.
+
+### Prerequisites
+- Python [3.11](https://www.python.org/downloads/release/python-3110/)
+- Flutter [3.13.9](https://docs.flutter.dev/release/archive)
+- [Git](https://git-scm.com/downloads)
 
 ## Installation
 1. Clone the repository
