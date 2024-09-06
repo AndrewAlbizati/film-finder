@@ -50,6 +50,11 @@ cd app
 ```
 
 3. Setup environment variables
+```
+SECRET_KEY=
+DEBUG=
+ALLOWED_HOSTS=
+```
 
 
 ## Usage
