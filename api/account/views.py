@@ -16,7 +16,7 @@ from .serializers import UserSerializer
 def get_routes(request):
     routes = [
         {
-            'Endpoint': '/login',
+            'Endpoint': '/login/',
             'method': 'POST',
             'body': {'username': '', 'password': ''},
             'description': 'Returns an authorization token'

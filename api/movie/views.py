@@ -10,7 +10,6 @@ from django.contrib.auth.models import User
 from django.http import HttpResponseBadRequest
 
 from .models import Movie
-import json
 import pickle
 import pandas as pd
 
@@ -25,7 +24,7 @@ def get_routes(request):
             'description': 'Returns a list of movie IDs sorted by popularity (Requires authentication)'
         },
         {
-            'Endpoint': '/<id>/',
+            'Endpoint': '/get/<id>/',
             'method': 'GET',
             'body': None,
             'description': 'Returns information for a movie based on ID (Requires authentication)'

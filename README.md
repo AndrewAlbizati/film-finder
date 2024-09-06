@@ -74,6 +74,9 @@ flutter run -d chrome
 Visit `http://localhost:3000` to view the app.
 
 ## API Documentation
+- Movie API documentation can be found [here](https://film-finder-up8b.onrender.com/api/movie/)
+
+- Account API documentation can be found [here](https://film-finder-up8b.onrender.com/api/account/)
 
 ## License
 This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
