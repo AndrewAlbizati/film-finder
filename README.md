@@ -16,10 +16,16 @@ The API is deployed to the web via Render, and can be found [here](https://film-
 ## Tech Stack
 ### Frontend
 - Flutter
+    - Web
+    - iOS
+    - Android
 
 ### Backend
-- Django
+- Django REST Framework
 - SQLite
+- sklearn
+- pandas
+- numpy
 
 ## Getting Started
 Follow these instructions to get a copy of the project up and running on your local machine for development and testing purposes.
@@ -74,9 +80,9 @@ flutter run -d chrome
 Visit `http://localhost:3000` to view the app.
 
 ## API Documentation
-- Movie API documentation can be found [here](https://film-finder-up8b.onrender.com/api/movie/)
+- Movie API documentation can be found [here](https://film-finder-up8b.onrender.com/api/movie/).
 
-- Account API documentation can be found [here](https://film-finder-up8b.onrender.com/api/account/)
+- Account API documentation can be found [here](https://film-finder-up8b.onrender.com/api/account/).
 
 ## License
 This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
